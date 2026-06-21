@@ -1,0 +1,13 @@
+marker_group,marker,omics,feature_index,feature_name
+Luminal_ER_positive,ESR1,1,309,ESR1|2099
+Luminal_ER_positive,PGR,1,667,PGR|5241
+Luminal_ER_positive,FOXA1,1,360,FOXA1|3169
+Luminal_ER_positive,GATA3,1,378,GATA3|2625
+Luminal_ER_positive,BCL2,1,71,BCL2|596
+Proliferation,AURKA,1,59,AURKA|6790
+Proliferation,BIRC5,1,74,BIRC5|332
+Proliferation,CCNB1,1,163,CCNB1|891
+Luminal_ER_positive,PGR,2,669,PGR
+Luminal_ER_positive,FOXA1,2,332,FOXA1
+Basal_like,KRT17,2,444,KRT17
+Proliferation,BIRC5,2,78,BIRC5
