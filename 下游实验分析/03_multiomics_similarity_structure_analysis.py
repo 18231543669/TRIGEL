@@ -33,6 +33,13 @@ DEFAULT_TRIGEL_EMBEDDING = (
     / "BRCA875_TRIGEL_embeddings.npy"
 )
 DEFAULT_OUTPUT_DIR = SCRIPT_DIR / "results" / "03_multiomics_similarity_structure"
+DEFAULT_SUBTYPE_NAMES = [
+    "Luminal A",
+    "Luminal B",
+    "HER2-enriched",
+    "Basal-like",
+    "Normal-like",
+]
 
 
 def parse_args() -> argparse.Namespace:
@@ -51,8 +58,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--subtype-names",
         nargs="*",
+        default=DEFAULT_SUBTYPE_NAMES,
+        help=(
+            "Optional subtype names in numeric-label order. Defaults to PAM50 "
+            "subtype names: Luminal A, Luminal B, HER2-enriched, Basal-like, "
+            "Normal-like."
+        ),
+    )
+    parser.add_argument(
+        "--summary-csv",
+        type=Path,
         default=None,
-        help="Optional subtype names in numeric-label order.",
+        help=(
+            "Optional existing similarity_structure_summary.csv. If provided, "
+            "only the within/between bar plot is redrawn from this table."
+        ),
     )
     return parser.parse_args()
 
@@ -125,7 +145,7 @@ def plot_similarity_heatmap(
     labels_sorted = labels[order]
     values = sim[np.ix_(order, order)]
 
-    fig, ax = plt.subplots(figsize=(7.5, 6.8))
+    fig, ax = plt.subplots(figsize=(8.8, 7.4))
     im = ax.imshow(values, cmap="viridis", vmin=-0.2, vmax=1.0, aspect="auto")
     ax.set_title(title)
     ax.set_xticks([])
@@ -143,12 +163,13 @@ def plot_similarity_heatmap(
         start = end
     secx = ax.secondary_xaxis("top")
     secx.set_xticks(tick_positions)
-    secx.set_xticklabels(tick_labels, rotation=30, ha="left", fontsize=8)
-    secy = ax.secondary_yaxis("right")
-    secy.set_yticks(tick_positions)
-    secy.set_yticklabels(tick_labels, fontsize=8)
-    fig.colorbar(im, ax=ax, label="Cosine similarity", fraction=0.046, pad=0.04)
-    fig.tight_layout()
+    secx.set_xticklabels(tick_labels, rotation=30, ha="left", fontsize=9)
+    ax.set_yticks(tick_positions)
+    ax.set_yticklabels(tick_labels, fontsize=9)
+    ax.set_xlabel("Samples sorted by PAM50 subtype")
+    ax.set_ylabel("Samples sorted by PAM50 subtype")
+    fig.colorbar(im, ax=ax, label="Cosine similarity", fraction=0.046, pad=0.08)
+    fig.tight_layout(rect=(0.02, 0.02, 0.98, 0.96))
     for ext in ("png", "pdf", "svg"):
         fig.savefig(output_stem.with_suffix(f".{ext}"), dpi=300)
     plt.close(fig)
@@ -174,19 +195,41 @@ def similarity_stats(sim: np.ndarray, labels: np.ndarray, name: str) -> dict[str
 def plot_within_between(summary_long: pd.DataFrame, output_dir: Path) -> None:
     reps = summary_long["representation"].unique().tolist()
     x = np.arange(len(reps))
-    width = 0.36
+    width = 0.24
     within = summary_long.set_index("representation").loc[reps, "within_mean"]
     between = summary_long.set_index("representation").loc[reps, "between_mean"]
 
-    fig, ax = plt.subplots(figsize=(8.5, 4.8))
-    ax.bar(x - width / 2, within, width, label="Within subtype")
-    ax.bar(x + width / 2, between, width, label="Between subtype")
+    fig, ax = plt.subplots(figsize=(7.6, 4.6))
+    within_bars = ax.bar(
+        x - width / 2,
+        within,
+        width,
+        label="Within subtype",
+        color="#3B6EA8",
+        edgecolor="white",
+        linewidth=0.8,
+    )
+    between_bars = ax.bar(
+        x + width / 2,
+        between,
+        width,
+        label="Between subtype",
+        color="#D9822B",
+        edgecolor="white",
+        linewidth=0.8,
+    )
+    ax.axhline(0, color="#333333", linewidth=0.8)
     ax.set_xticks(x)
-    ax.set_xticklabels(reps, rotation=30, ha="right")
+    ax.set_xticklabels(reps, rotation=25, ha="right")
     ax.set_ylabel("Mean cosine similarity")
     ax.set_title("Within-subtype vs between-subtype similarity")
-    ax.grid(axis="y", alpha=0.25)
+    ax.set_xlim(-0.65, len(reps) - 0.35)
+    ax.grid(axis="y", alpha=0.20, linewidth=0.8)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
     ax.legend(frameon=False)
+    ax.bar_label(within_bars, fmt="%.2f", padding=3, fontsize=8)
+    ax.bar_label(between_bars, fmt="%.2f", padding=3, fontsize=8)
     fig.tight_layout()
     for ext in ("png", "pdf", "svg"):
         fig.savefig(output_dir / f"within_between_similarity.{ext}", dpi=300)
@@ -196,6 +239,13 @@ def plot_within_between(summary_long: pd.DataFrame, output_dir: Path) -> None:
 def main() -> None:
     args = parse_args()
     output_dir = create_run_dir(args.output_dir)
+    if args.summary_csv is not None:
+        summary = pd.read_csv(args.summary_csv)
+        plot_within_between(summary, output_dir)
+        summary.to_csv(output_dir / "similarity_structure_summary.csv", index=False)
+        print(f"Similarity bar plot redrawn from summary: {output_dir}")
+        return
+
     labels = load_labels(args.data_dir, args.labels)
     rows = []
 
@@ -223,7 +273,7 @@ def main() -> None:
             plot_similarity_heatmap(
                 sim,
                 labels,
-                "TRIGEL representation similarity",
+                "TRIGEL learned embedding similarity",
                 output_dir / "trigel_similarity_heatmap",
                 args.max_heatmap_samples,
                 args.subtype_names,

@@ -163,12 +163,22 @@ def graph_summary(
 
 
 def plot_ratio_bar(summary: pd.DataFrame, output_dir: Path) -> None:
-    fig, ax = plt.subplots(figsize=(7.0, 4.6))
-    ax.bar(summary["graph"], summary["intra_subtype_edge_ratio"], color="#4C78A8")
-    ax.set_ylim(0, 1.0)
+    fig, ax = plt.subplots(figsize=(6.2, 4.4))
+    bars = ax.bar(
+        summary["graph"],
+        summary["intra_subtype_edge_ratio"],
+        width=0.38,
+        color="#3B6EA8",
+        edgecolor="white",
+        linewidth=0.8,
+    )
+    ax.set_ylim(0, 0.78)
     ax.set_ylabel("Intra-subtype edge ratio")
     ax.set_title("Subtype aggregation in sample graphs")
-    ax.grid(axis="y", alpha=0.25)
+    ax.grid(axis="y", alpha=0.20, linewidth=0.8)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.bar_label(bars, fmt="%.2f", padding=3, fontsize=9)
     fig.tight_layout()
     for ext in ("png", "pdf", "svg"):
         fig.savefig(output_dir / f"intra_subtype_edge_ratio.{ext}", dpi=300)

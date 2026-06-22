@@ -62,6 +62,13 @@ DEFAULT_OUTPUT_DIR = DEFAULT_RESULT_DIR / "brca875_umap"
 
 DEFAULT_SEED = 97048
 DEFAULT_UMAP_SEED = 2026
+DEFAULT_CLASS_NAMES = [
+    "Luminal A",
+    "Luminal B",
+    "HER2-enriched",
+    "Basal-like",
+    "Normal-like",
+]
 
 
 def parse_args() -> argparse.Namespace:
@@ -98,8 +105,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--class-names",
         nargs="*",
-        default=None,
-        help="Optional class names in ascending numeric-label order.",
+        default=DEFAULT_CLASS_NAMES,
+        help=(
+            "Optional class names in ascending numeric-label order. Defaults "
+            "to PAM50 subtype names: Luminal A, Luminal B, HER2-enriched, "
+            "Basal-like, Normal-like."
+        ),
     )
     parser.add_argument(
         "--device",

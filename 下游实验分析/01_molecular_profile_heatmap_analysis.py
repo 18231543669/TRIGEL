@@ -25,6 +25,13 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 DEFAULT_DATA_DIR = PROJECT_ROOT / "datasets" / "BRCA"
 DEFAULT_OUTPUT_DIR = SCRIPT_DIR / "results" / "01_molecular_profile_heatmap"
+DEFAULT_SUBTYPE_NAMES = [
+    "Luminal A",
+    "Luminal B",
+    "HER2-enriched",
+    "Basal-like",
+    "Normal-like",
+]
 
 
 def parse_args() -> argparse.Namespace:
@@ -42,13 +49,22 @@ def parse_args() -> argparse.Namespace:
             "and labels_te.csv are concatenated."
         ),
     )
-    parser.add_argument("--top-n", type=int, default=30)
+    parser.add_argument(
+        "--top-n",
+        type=int,
+        default=15,
+        help="Number of top subtype-discriminative features shown in each heatmap.",
+    )
     parser.add_argument("--omics", nargs="*", type=int, default=[1, 2, 3])
     parser.add_argument(
         "--subtype-names",
         nargs="*",
-        default=None,
-        help="Optional subtype names in numeric-label order.",
+        default=DEFAULT_SUBTYPE_NAMES,
+        help=(
+            "Optional subtype names in numeric-label order. Defaults to PAM50 "
+            "subtype names: Luminal A, Luminal B, HER2-enriched, Basal-like, "
+            "Normal-like."
+        ),
     )
     return parser.parse_args()
 
@@ -127,14 +143,14 @@ def plot_heatmap(
     values = zscore_rows(matrix[order][:, selected].T)
     names = [feature_names[i] for i in selected]
 
-    fig_height = max(5.0, min(12.0, 0.22 * len(selected) + 2.5))
-    fig, ax = plt.subplots(figsize=(10.5, fig_height))
+    fig_height = max(5.2, min(9.0, 0.32 * len(selected) + 2.8))
+    fig, ax = plt.subplots(figsize=(11.0, fig_height))
     im = ax.imshow(values, aspect="auto", cmap="coolwarm", vmin=-2.5, vmax=2.5)
-    ax.set_title(f"Omics {omics_id}: top subtype-discriminative features")
+    ax.set_title(f"Omics {omics_id}: top PAM50 subtype-discriminative features")
     ax.set_xlabel("Samples sorted by subtype")
     ax.set_ylabel("Features")
     ax.set_yticks(np.arange(len(names)))
-    ax.set_yticklabels(names, fontsize=7)
+    ax.set_yticklabels(names, fontsize=9)
     ax.set_xticks([])
 
     boundaries = []
