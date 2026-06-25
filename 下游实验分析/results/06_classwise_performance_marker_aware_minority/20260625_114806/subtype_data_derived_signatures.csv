@@ -1,0 +1,25 @@
+signature_name,target_subtypes,rank,feature_index,gene_symbol,target_minus_others_z,note
+Luminal subtype signature,"Luminal A, Luminal B",1,361,FOXC1,1.5846320190698486,Data-derived subtype-discriminative signature from the current mRNA feature table.
+Luminal subtype signature,"Luminal A, Luminal B",2,800,SFRS13B,1.5113602589267119,Data-derived subtype-discriminative signature from the current mRNA feature table.
+Luminal subtype signature,"Luminal A, Luminal B",3,766,ROPN1,1.5017020982828766,Data-derived subtype-discriminative signature from the current mRNA feature table.
+Luminal subtype signature,"Luminal A, Luminal B",4,964,VGLL1,1.4027371756850149,Data-derived subtype-discriminative signature from the current mRNA feature table.
+Luminal subtype signature,"Luminal A, Luminal B",5,765,ROPN1B,1.402690287614687,Data-derived subtype-discriminative signature from the current mRNA feature table.
+Luminal subtype signature,"Luminal A, Luminal B",6,634,OCA2,1.3970921005875914,Data-derived subtype-discriminative signature from the current mRNA feature table.
+Luminal subtype signature,"Luminal A, Luminal B",7,202,CHODL,1.392126979760778,Data-derived subtype-discriminative signature from the current mRNA feature table.
+Luminal subtype signature,"Luminal A, Luminal B",8,326,FAM171A1,1.3915459003071469,Data-derived subtype-discriminative signature from the current mRNA feature table.
+HER2-enriched subtype signature,HER2-enriched,1,574,MPHOSPH6,1.8908715277091916,Data-derived subtype-discriminative signature from the current mRNA feature table.
+HER2-enriched subtype signature,HER2-enriched,2,449,ISL2,1.574174830552719,Data-derived subtype-discriminative signature from the current mRNA feature table.
+HER2-enriched subtype signature,HER2-enriched,3,844,SOX11,1.509742578438238,Data-derived subtype-discriminative signature from the current mRNA feature table.
+HER2-enriched subtype signature,HER2-enriched,4,11,ACE2,1.0697812017266093,Data-derived subtype-discriminative signature from the current mRNA feature table.
+HER2-enriched subtype signature,HER2-enriched,5,558,MDGA2,1.0181595906771943,Data-derived subtype-discriminative signature from the current mRNA feature table.
+HER2-enriched subtype signature,HER2-enriched,6,854,SRD5A1,1.0129576963250946,Data-derived subtype-discriminative signature from the current mRNA feature table.
+HER2-enriched subtype signature,HER2-enriched,7,149,CBX2,1.00672338532511,Data-derived subtype-discriminative signature from the current mRNA feature table.
+HER2-enriched subtype signature,HER2-enriched,8,280,DNMT3B,0.9965848375204405,Data-derived subtype-discriminative signature from the current mRNA feature table.
+Basal-like subtype signature,Basal-like,1,464,KDM4B,1.0211857259797672,Data-derived subtype-discriminative signature from the current mRNA feature table.
+Basal-like subtype signature,Basal-like,2,403,GPR77,1.0141637188461874,Data-derived subtype-discriminative signature from the current mRNA feature table.
+Basal-like subtype signature,Basal-like,3,548,MAPT,1.0097713180620729,Data-derived subtype-discriminative signature from the current mRNA feature table.
+Basal-like subtype signature,Basal-like,4,0,?,0.994770240229012,Data-derived subtype-discriminative signature from the current mRNA feature table.
+Basal-like subtype signature,Basal-like,5,591,NAT1,0.9863526737865571,Data-derived subtype-discriminative signature from the current mRNA feature table.
+Basal-like subtype signature,Basal-like,6,835,SLC7A8,0.9833007918096512,Data-derived subtype-discriminative signature from the current mRNA feature table.
+Basal-like subtype signature,Basal-like,7,2,ABAT,0.9675960504014373,Data-derived subtype-discriminative signature from the current mRNA feature table.
+Basal-like subtype signature,Basal-like,8,881,TBC1D9,0.9611363978661541,Data-derived subtype-discriminative signature from the current mRNA feature table.

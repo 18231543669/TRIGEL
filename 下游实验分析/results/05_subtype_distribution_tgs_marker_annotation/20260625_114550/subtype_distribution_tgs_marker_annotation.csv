@@ -1,0 +1,6 @@
+subtype_id,subtype,tgs_group,count,fraction,marker_annotation
+0,Luminal A,Intermediate,115,0.13142857142857142,"ER-positive luminal program; ESR1, PGR, FOXA1, GATA3, MLPH"
+1,Luminal B,Intermediate,131,0.14971428571428572,"Luminal/proliferative program; ESR1/PGR axis, MKI67, AURKA"
+2,HER2-enriched,Minority,46,0.052571428571428575,"HER2-amplified program; ERBB2, GRB7, PGAP3"
+3,Basal-like,Majority,436,0.4982857142857143,"Basal/epithelial program; KRT5, KRT14, KRT17, EGFR, FOXC1"
+4,Normal-like,Intermediate,147,0.168,Normal-like epithelial context; Luminal and stromal-like signals

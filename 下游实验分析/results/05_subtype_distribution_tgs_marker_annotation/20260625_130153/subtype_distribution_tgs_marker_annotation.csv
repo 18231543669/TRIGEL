@@ -1,0 +1,6 @@
+subtype_id,subtype,tgs_group,count,fraction,marker_annotation
+0,Normal-like,Intermediate,115,0.13142857142857142,"Normal-like/stromal context; CNN1, MYH11, LMOD1-like signals"
+1,Basal-like,Intermediate,131,0.14971428571428572,"Basal/epithelial program; FOXC1, KRT5/14/17, EGFR-related axis"
+2,HER2-enriched,Minority,46,0.052571428571428575,"HER2-amplified program; ERBB2, GRB7, PGAP3"
+3,Luminal A,Majority,436,0.4982857142857143,"ER-positive luminal program; ESR1, PGR, FOXA1, GATA3, MLPH"
+4,Luminal B,Intermediate,147,0.168,Luminal/proliferative program; ER axis with cell-cycle activity

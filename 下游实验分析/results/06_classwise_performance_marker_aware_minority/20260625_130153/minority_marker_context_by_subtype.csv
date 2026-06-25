@@ -1,0 +1,21 @@
+score_name,subtype_id,subtype,mean_score,median_score,n
+Normal-like signature,0,Normal-like,1.23851563502719,1.3827238548082479,115
+Normal-like signature,1,Basal-like,-0.18974147751463608,-0.3340297095790203,131
+Normal-like signature,2,HER2-enriched,-0.37749301174287075,-0.5768799499573583,46
+Normal-like signature,3,Luminal A,-0.04304482334559058,-0.18522055520804065,436
+Normal-like signature,4,Luminal B,-0.5540200201010875,-0.799193097095194,147
+Basal-like signature,0,Normal-like,0.00506225320585412,-0.08261500325702353,115
+Basal-like signature,1,Basal-like,1.5924566543191117,1.7612220861840195,131
+Basal-like signature,2,HER2-enriched,-0.0662447569964397,-0.12146595871634902,46
+Basal-like signature,3,Luminal A,-0.3373914341119887,-0.3570042249536396,436
+Basal-like signature,4,Luminal B,-0.40166024993070426,-0.4277056766901119,147
+Luminal subtype signature,0,Normal-like,-0.315695755914596,-0.21941136854393,115
+Luminal subtype signature,1,Basal-like,-1.4487752261467473,-1.5309276491273953,131
+Luminal subtype signature,2,HER2-enriched,-0.8438578120221689,-0.855039890731673,46
+Luminal subtype signature,3,Luminal A,0.46499566901364936,0.5980714913206315,436
+Luminal subtype signature,4,Luminal B,0.4229517974045645,0.5310594276503907,147
+HER2-enriched subtype signature,0,Normal-like,-0.03769878683377312,-0.16893741719631628,115
+HER2-enriched subtype signature,1,Basal-like,0.8957174251684746,0.9749070054131003,131
+HER2-enriched subtype signature,2,HER2-enriched,1.1936410560599489,1.3754487906015243,46
+HER2-enriched subtype signature,3,Luminal A,-0.33879898267330416,-0.35338086008615194,436
+HER2-enriched subtype signature,4,Luminal B,-0.13737928125430804,-0.15520737947775412,147

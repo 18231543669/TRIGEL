@@ -1,0 +1,9 @@
+rank,feature_index,gene_symbol,her2_enriched_minus_others_z,note
+1,574,MPHOSPH6,1.8908715277091916,Data-derived HER2-enriched subtype signature because canonical HER2 markers were not present in the selected feature table.
+2,449,ISL2,1.574174830552719,Data-derived HER2-enriched subtype signature because canonical HER2 markers were not present in the selected feature table.
+3,844,SOX11,1.509742578438238,Data-derived HER2-enriched subtype signature because canonical HER2 markers were not present in the selected feature table.
+4,11,ACE2,1.0697812017266093,Data-derived HER2-enriched subtype signature because canonical HER2 markers were not present in the selected feature table.
+5,558,MDGA2,1.0181595906771943,Data-derived HER2-enriched subtype signature because canonical HER2 markers were not present in the selected feature table.
+6,854,SRD5A1,1.0129576963250946,Data-derived HER2-enriched subtype signature because canonical HER2 markers were not present in the selected feature table.
+7,149,CBX2,1.00672338532511,Data-derived HER2-enriched subtype signature because canonical HER2 markers were not present in the selected feature table.
+8,280,DNMT3B,0.9965848375204405,Data-derived HER2-enriched subtype signature because canonical HER2 markers were not present in the selected feature table.

@@ -1,0 +1,16 @@
+score_name,subtype_id,subtype,mean_score,median_score,n
+Luminal marker score,0,Luminal A,-0.11863040240531993,0.02430050693044362,115
+Luminal marker score,1,Luminal B,-1.4586510247989035,-1.5280072788051837,131
+Luminal marker score,2,HER2-enriched,-0.6001378507944883,-0.6272503441081558,46
+Luminal marker score,3,Basal-like,0.42358448373193647,0.5047582081946316,436
+Luminal marker score,4,Normal-like,0.3241448078550362,0.34464733690127836,147
+Basal/proliferation score,0,Luminal A,-0.6084944264591094,-0.6888356234860568,115
+Basal/proliferation score,1,Luminal B,0.9997387272616095,1.187640006634561,131
+Basal/proliferation score,2,HER2-enriched,0.30713006547028593,0.3884318046983945,46
+Basal/proliferation score,3,Basal-like,-0.243653767106753,-0.2203521741499051,436
+Basal/proliferation score,4,Normal-like,0.21167445726828618,0.344986248987766,147
+HER2-enriched subtype signature,0,Luminal A,-0.03769878683377312,-0.16893741719631628,115
+HER2-enriched subtype signature,1,Luminal B,0.8957174251684746,0.9749070054131003,131
+HER2-enriched subtype signature,2,HER2-enriched,1.1936410560599489,1.3754487906015243,46
+HER2-enriched subtype signature,3,Basal-like,-0.33879898267330416,-0.35338086008615194,436
+HER2-enriched subtype signature,4,Normal-like,-0.13737928125430804,-0.15520737947775412,147

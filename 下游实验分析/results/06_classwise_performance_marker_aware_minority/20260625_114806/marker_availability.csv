@@ -1,0 +1,4 @@
+score_name,requested_markers,matched_markers,missing_markers
+Luminal canonical markers,"ESR1, PGR, FOXA1, GATA3, BCL2, MLPH","ESR1, PGR, FOXA1, GATA3, BCL2, MLPH",
+Basal/proliferation canonical markers,"FOXC1, KRT17, AURKA, BIRC5, CCNB1","FOXC1, AURKA, BIRC5, CCNB1",KRT17
+HER2 canonical marker score,"ERBB2, GRB7, PGAP3, MIEN1, STARD3",,"ERBB2, GRB7, PGAP3, MIEN1, STARD3"
