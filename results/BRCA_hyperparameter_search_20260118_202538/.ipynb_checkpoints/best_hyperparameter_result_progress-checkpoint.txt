@@ -1,0 +1,23 @@
+超参数搜索开始: 2026-01-18 20:25:38
+策略: 覆盖式保存，只保留最好的一次结果
+==================================================
+[20:31:40] 实验 1 - ★ 第1次改善!
+  测试准确率: 0.8894±0.0043
+  测试F1-macro: 0.8762±0.0081
+  参数: {'hidden_dim': 64, 'fusion_num_heads': 2, 'fusion_dropout': 0.2, 'temperature': 0.05, 'cb_weight': 0.7, 'cl_weight': 0.2, 'embedding_dim': 64, 'minority_drop_rate': 0.0, 'majority_drop_rate': 0.3, 'edge_add_prob': 0.4, 'max_new_edges': 100, 'effective_num_beta': 0.99, 'minority_edge_weight': 2.0, 'quality_weight_factor': 0.3}
+
+[21:52:52] 实验 15 - ★ 第2次改善!
+  测试准确率: 0.8897±0.0056
+  测试F1-macro: 0.8695±0.0074
+  参数: {'hidden_dim': 64, 'fusion_num_heads': 2, 'fusion_dropout': 0.2, 'temperature': 0.05, 'cb_weight': 0.7, 'cl_weight': 0.2, 'embedding_dim': 64, 'minority_drop_rate': 0.0, 'majority_drop_rate': 0.3, 'edge_add_prob': 0.6, 'max_new_edges': 100, 'effective_num_beta': 0.99, 'minority_edge_weight': 2.5, 'quality_weight_factor': 0.3}
+
+[01:29:23] 实验 53 - ★ 第3次改善!
+  测试准确率: 0.8901±0.0071
+  测试F1-macro: 0.8728±0.0082
+  参数: {'hidden_dim': 64, 'fusion_num_heads': 2, 'fusion_dropout': 0.2, 'temperature': 0.05, 'cb_weight': 0.7, 'cl_weight': 0.3, 'embedding_dim': 64, 'minority_drop_rate': 0.0, 'majority_drop_rate': 0.3, 'edge_add_prob': 0.4, 'max_new_edges': 100, 'effective_num_beta': 0.99, 'minority_edge_weight': 3.0, 'quality_weight_factor': 0.3}
+
+[05:41:36] 实验 97 - ★ 第4次改善!
+  测试准确率: 0.8905±0.0061
+  测试F1-macro: 0.8714±0.0094
+  参数: {'hidden_dim': 64, 'fusion_num_heads': 2, 'fusion_dropout': 0.2, 'temperature': 0.05, 'cb_weight': 0.8, 'cl_weight': 0.2, 'embedding_dim': 64, 'minority_drop_rate': 0.0, 'majority_drop_rate': 0.3, 'edge_add_prob': 0.4, 'max_new_edges': 100, 'effective_num_beta': 0.99, 'minority_edge_weight': 2.0, 'quality_weight_factor': 0.3}
+
