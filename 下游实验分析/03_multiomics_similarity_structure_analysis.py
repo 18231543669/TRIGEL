@@ -1,9 +1,26 @@
 #!/usr/bin/env python
-"""Multi-omics subtype similarity-structure analysis.
+"""多组学与 TRIGEL 表示的样本相似性结构分析。
 
-This script compares sample-similarity structure in each omics layer and in
-TRIGEL embeddings. It measures whether samples from the same subtype are more
-similar than samples from different subtypes.
+这个脚本比较单组学输入和 TRIGEL 模型输出表示中的样本相似性结构。核心问题是：
+同一亚型样本在表示空间中是否更相似，不同亚型样本是否更不相似。
+
+图的含义：
+    1. similarity heatmap：横纵轴都是样本，颜色表示样本两两余弦相似度；
+       对角块越明显，说明同亚型样本越聚集。
+    2. within/between bar plot：比较同亚型样本对和不同亚型样本对的平均相似度；
+       两者差距越大，说明表示空间越能保留亚型结构。
+
+下游分析意义：
+    如果 TRIGEL 的同亚型相似度明显高于单组学和简单输入，同时不同亚型相似度
+    更低，说明模型输出表示确实增强了亚型结构。这比单纯展示热图更接近模型
+    表示质量证据。
+
+标签序号说明：
+    0 -> Normal-like
+    1 -> Basal-like
+    2 -> HER2-enriched
+    3 -> Luminal A
+    4 -> Luminal B
 """
 
 from __future__ import annotations
@@ -34,11 +51,11 @@ DEFAULT_TRIGEL_EMBEDDING = (
 )
 DEFAULT_OUTPUT_DIR = SCRIPT_DIR / "results" / "03_multiomics_similarity_structure"
 DEFAULT_SUBTYPE_NAMES = [
+    "Normal-like",
+    "Basal-like",
+    "HER2-enriched",
     "Luminal A",
     "Luminal B",
-    "HER2-enriched",
-    "Basal-like",
-    "Normal-like",
 ]
 
 
@@ -53,16 +70,14 @@ def parse_args() -> argparse.Namespace:
         "--max-heatmap-samples",
         type=int,
         default=500,
-        help="Maximum samples shown in heatmaps; statistics still use all samples.",
+        help="热图最多展示的样本数；统计指标仍使用全部样本。",
     )
     parser.add_argument(
         "--subtype-names",
         nargs="*",
         default=DEFAULT_SUBTYPE_NAMES,
         help=(
-            "Optional subtype names in numeric-label order. Defaults to PAM50 "
-            "subtype names: Luminal A, Luminal B, HER2-enriched, Basal-like, "
-            "Normal-like."
+            "按数字标签顺序提供亚型名称。默认使用当前数据审计后的标签映射。"
         ),
     )
     parser.add_argument(
@@ -70,8 +85,8 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=None,
         help=(
-            "Optional existing similarity_structure_summary.csv. If provided, "
-            "only the within/between bar plot is redrawn from this table."
+            "可选的已有 similarity_structure_summary.csv。若提供，则只根据该表"
+            "重画 within/between 柱状图。"
         ),
     )
     return parser.parse_args()
@@ -110,6 +125,11 @@ def subtype_display(value: object, subtype_names: list[str] | None) -> str:
 
 
 def cosine_similarity_matrix(x: np.ndarray) -> np.ndarray:
+    """计算样本两两余弦相似度矩阵。
+
+    先对特征做中心化，再归一化每个样本向量。余弦相似度越高，表示两个样本在
+    当前组学或模型表示空间中越接近。
+    """
     x = np.asarray(x, dtype=float)
     x = x - np.nanmean(x, axis=0, keepdims=True)
     norms = np.linalg.norm(x, axis=1, keepdims=True)
@@ -118,6 +138,11 @@ def cosine_similarity_matrix(x: np.ndarray) -> np.ndarray:
 
 
 def sample_order(labels: np.ndarray, max_samples: int) -> np.ndarray:
+    """确定热图展示的样本顺序。
+
+    样本先按标签排序，便于观察同亚型块状结构。若样本过多，则每个亚型均匀抽取
+    一部分样本用于热图展示；但统计表仍使用全部样本。
+    """
     full_order = np.argsort(labels, kind="stable")
     if len(full_order) <= max_samples:
         return full_order
@@ -141,6 +166,11 @@ def plot_similarity_heatmap(
     max_samples: int,
     subtype_names: list[str] | None,
 ) -> None:
+    """绘制样本相似性热图。
+
+    图中每个像素表示两个样本的余弦相似度。若同一亚型形成明亮方块，说明该表示
+    能把同类样本放得更近；若方块不清晰，说明亚型结构较弱或被混杂。
+    """
     order = sample_order(labels, max_samples)
     labels_sorted = labels[order]
     values = sim[np.ix_(order, order)]
@@ -176,6 +206,11 @@ def plot_similarity_heatmap(
 
 
 def similarity_stats(sim: np.ndarray, labels: np.ndarray, name: str) -> dict[str, float]:
+    """计算同亚型与不同亚型样本对的相似度统计。
+
+    within_mean 越高，说明同类样本越紧凑；between_mean 越低，说明不同类样本越
+    分离；separation_mean 是二者差值，是判断表示空间亚型结构的关键数值。
+    """
     upper = np.triu_indices_from(sim, k=1)
     same = labels[upper[0]] == labels[upper[1]]
     within = sim[upper][same]
@@ -193,6 +228,7 @@ def similarity_stats(sim: np.ndarray, labels: np.ndarray, name: str) -> dict[str
 
 
 def plot_within_between(summary_long: pd.DataFrame, output_dir: Path) -> None:
+    """绘制同亚型/不同亚型平均相似度对比柱状图。"""
     reps = summary_long["representation"].unique().tolist()
     x = np.arange(len(reps))
     width = 0.24
@@ -237,6 +273,7 @@ def plot_within_between(summary_long: pd.DataFrame, output_dir: Path) -> None:
 
 
 def main() -> None:
+    """运行单组学和 TRIGEL 表示的相似性结构分析。"""
     args = parse_args()
     output_dir = create_run_dir(args.output_dir)
     if args.summary_csv is not None:

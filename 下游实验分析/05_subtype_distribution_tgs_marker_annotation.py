@@ -1,8 +1,28 @@
 #!/usr/bin/env python
-"""Subtype sample distribution, TGS grouping, and BRCA marker annotation.
+"""亚型样本数量分布、TGS 分组和亚型生物学注释图。
 
-This figure is intended to show that the BRCA task is imbalanced and that the
-imbalanced labels correspond to biologically meaningful PAM50 subtypes.
+这个脚本用于展示 BRCA 数据集中各亚型样本数量是否不平衡，并根据类别频率将
+亚型划分为 Majority、Intermediate 和 Minority。
+
+图的含义：
+    左侧柱状图展示每个亚型的样本数量和比例；颜色表示 TGS 频率分组。
+    右侧文字说明每个亚型通常对应的分子程序或 marker 方向。
+
+与创新点的关系：
+    这张图主要是“问题定义图”，用于说明为什么需要不平衡建模。它本身不能证明
+    TRIGEL 已经解决了不平衡问题，但可以作为后续少数类近邻纯度、图增强前后
+    连边比例等核心结果图的背景。
+
+标签序号说明：
+    0 -> Normal-like
+    1 -> Basal-like
+    2 -> HER2-enriched
+    3 -> Luminal A
+    4 -> Luminal B
+
+注意：
+    该映射来自当前数据的类别数量和 marker/signature 审计。若后续拿到原始
+    PAM50 临床注释，应以原始注释为准。
 """
 
 from __future__ import annotations
@@ -93,6 +113,7 @@ def load_labels(data_dir: Path, labels_path: Path | None) -> np.ndarray:
 
 
 def set_style() -> None:
+    """统一图形字体、线宽和导出设置，使图片适合放入报告或论文。"""
     mpl.rcParams.update(
         {
             "font.family": "sans-serif",
@@ -109,6 +130,7 @@ def set_style() -> None:
 
 
 def build_summary(labels: np.ndarray) -> pd.DataFrame:
+    """根据标签统计每个亚型的样本数量、比例和 TGS 分组。"""
     rows = []
     total = len(labels)
     for subtype_id in sorted(SUBTYPE_NAMES):
@@ -127,6 +149,12 @@ def build_summary(labels: np.ndarray) -> pd.DataFrame:
 
 
 def plot_distribution(summary: pd.DataFrame, output_dir: Path) -> None:
+    """绘制样本数量分布和右侧亚型注释。
+
+    读图方式：
+        最高的柱子表示多数类，最低的柱子表示少数类。若少数类比例很低，普通
+        分类模型容易偏向多数类，因此后续应重点观察少数类性能和近邻结构。
+    """
     fig = plt.figure(figsize=(8.8, 5.3), constrained_layout=True)
     gs = fig.add_gridspec(1, 2, width_ratios=[1.18, 1.0], wspace=0.32)
     ax = fig.add_subplot(gs[0, 0])
@@ -188,6 +216,7 @@ def plot_distribution(summary: pd.DataFrame, output_dir: Path) -> None:
 
 
 def main() -> None:
+    """生成分布统计表和样本不平衡背景图。"""
     args = parse_args()
     set_style()
     output_dir = create_run_dir(args.output_dir)

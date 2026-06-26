@@ -1,9 +1,29 @@
 #!/usr/bin/env python
-"""TRIGEL embedding projection colored by BRCA subtype marker/signature scores.
+"""TRIGEL 表示空间与亚型分子签名可视化。
 
-The script supports UMAP, but defaults to PCA because some local environments
-can hang during umap/numba initialization. Use ``--method umap`` when UMAP runs
-normally in the selected Python environment.
+这个脚本只分析 TRIGEL 输出的样本表示。它先把 TRIGEL embedding 降到二维，
+再分别用亚型标签和 subtype-discriminative signature score 给样本着色。
+
+图的含义：
+    第一个子图按亚型标签着色，用于观察 TRIGEL 表示空间是否形成亚型相关结构；
+    后续子图按不同亚型签名分数着色，用于观察这些空间结构是否对应分子差异。
+
+与创新点的关系：
+    如果少数类或中小类在 TRIGEL 表示空间中形成相对清晰的区域，并且该区域
+    具有相应的分子签名增强，说明模型输出表示不是随机聚类，而是保留了与亚型
+    相关的分子结构。不过，若要证明“不平衡策略优于 baseline”，还需要与单组学、
+    early fusion 或 ablation 的表示空间进行对比。
+
+降维方法说明：
+    脚本支持 UMAP，但默认使用 PCA，因为部分本地环境在 umap/numba 初始化时会
+    卡住。若环境正常，可以通过 ``--method umap`` 生成 UMAP 版本。
+
+标签序号说明：
+    0 -> Normal-like
+    1 -> Basal-like
+    2 -> HER2-enriched
+    3 -> Luminal A
+    4 -> Luminal B
 """
 
 from __future__ import annotations
@@ -64,8 +84,8 @@ def parse_args() -> argparse.Namespace:
         choices=["pca", "umap"],
         default="pca",
         help=(
-            "Projection method. Defaults to pca for reliable local execution; "
-            "use umap when umap-learn initializes correctly."
+            "二维投影方法。默认使用 pca 以保证本地稳定运行；如果 umap-learn "
+            "可以正常初始化，可使用 --method umap。"
         ),
     )
     return parser.parse_args()
@@ -83,6 +103,7 @@ def create_run_dir(base_dir: Path) -> Path:
 
 
 def set_style() -> None:
+    """设置统一绘图风格和可编辑 SVG/PDF 字体。"""
     mpl.rcParams.update(
         {
             "font.family": "sans-serif",
@@ -99,12 +120,14 @@ def set_style() -> None:
 
 
 def load_labels(data_dir: Path) -> np.ndarray:
+    """加载并拼接训练集与测试集标签。"""
     train = pd.read_csv(data_dir / "labels_tr.csv", header=None).iloc[:, 0]
     test = pd.read_csv(data_dir / "labels_te.csv", header=None).iloc[:, 0]
     return pd.concat([train, test], ignore_index=True).to_numpy(dtype=int)
 
 
 def load_omics(data_dir: Path, omics_id: int) -> tuple[np.ndarray, list[str]]:
+    """加载指定组学矩阵和基因符号。这里主要使用 mRNA 构建签名。"""
     train = pd.read_csv(data_dir / f"{omics_id}_tr.csv", header=None)
     test = pd.read_csv(data_dir / f"{omics_id}_te.csv", header=None)
     matrix = pd.concat([train, test], ignore_index=True).to_numpy(dtype=float)
@@ -114,6 +137,7 @@ def load_omics(data_dir: Path, omics_id: int) -> tuple[np.ndarray, list[str]]:
 
 
 def zscore_columns(matrix: np.ndarray) -> np.ndarray:
+    """按特征列做 z-score，用于构建可比较的签名分数。"""
     mean = np.nanmean(matrix, axis=0, keepdims=True)
     std = np.nanstd(matrix, axis=0, keepdims=True)
     return (matrix - mean) / (std + 1e-8)
@@ -122,6 +146,11 @@ def zscore_columns(matrix: np.ndarray) -> np.ndarray:
 def marker_score(
     matrix: np.ndarray, symbols: list[str], markers: list[str]
 ) -> tuple[np.ndarray | None, list[str]]:
+    """计算经典 marker 集合的样本级平均 z-score。
+
+    如果当前特征表中没有对应 marker，则返回 None，并在 marker_availability.csv
+    中记录缺失情况。
+    """
     symbol_to_indices: dict[str, list[int]] = {}
     for idx, symbol in enumerate(symbols):
         symbol_to_indices.setdefault(symbol, []).append(idx)
@@ -146,6 +175,11 @@ def subtype_discriminative_signature(
     signature_name: str,
     top_n: int,
 ) -> tuple[np.ndarray, pd.DataFrame]:
+    """构建数据驱动的亚型区分性签名。
+
+    选择目标亚型相对其他亚型差异最大的基因，并把这些基因的平均 z-score 作为
+    样本的 signature score。该分数用于辅助解释 TRIGEL 表示空间中的分子结构。
+    """
     z = zscore_columns(matrix)
     target = np.isin(labels, target_subtypes)
     target_mean = np.nanmean(z[target], axis=0)
@@ -170,6 +204,7 @@ def subtype_discriminative_signature(
 def build_scores(
     data_dir: Path, labels: np.ndarray, top_signature_genes: int
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """生成每个样本的签名分数表，并记录经典 marker 是否存在。"""
     matrix, symbols = load_omics(data_dir, 1)
     if matrix.shape[0] != len(labels):
         raise ValueError("Omics 1 and labels have different sample counts.")
@@ -226,6 +261,11 @@ def plot_umap(
     output_dir: Path,
     method_label: str,
 ) -> None:
+    """绘制 TRIGEL 表示空间和 signature score 着色图。
+
+    第一个子图看亚型分布；后续子图看不同亚型签名在空间中的梯度。若某个签名的
+    高分区域与对应亚型区域重合，说明 TRIGEL 空间保留了相应分子结构。
+    """
     fig, axes = plt.subplots(2, 3, figsize=(10.8, 7.0), constrained_layout=True)
     axes = axes.reshape(-1)
 
@@ -282,6 +322,7 @@ def plot_umap(
 
 
 def main() -> None:
+    """运行投影、签名分数计算、源数据保存和图像导出。"""
     args = parse_args()
     set_style()
     output_dir = create_run_dir(args.output_dir)

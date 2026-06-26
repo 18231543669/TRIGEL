@@ -1,8 +1,28 @@
 #!/usr/bin/env python
-"""Class-wise TRIGEL performance and minority-subtype biological context.
+"""TRIGEL 逐类性能和少数类分子签名背景分析。
 
-The performance panel is calculated from saved confusion matrices in the best
-TRIGEL result JSON, so this script does not load torch or a trained model.
+这个脚本从保存好的最佳 TRIGEL 实验结果 JSON 中读取混淆矩阵，计算每个亚型的
+Recall、Precision 和 F1。它不加载 torch，也不重新运行模型。
+
+图的含义：
+    左侧柱状图展示每个亚型的 Recall 和 F1，用来判断模型是否只提高总体准确率，
+    还是对样本较少的类别也保持了较好的识别能力。
+
+    右侧热图展示当前 mRNA 特征表中自动筛选出的 subtype-discriminative
+    signature 在各亚型中的均值。它用于辅助说明分类结果对应的样本确实具有
+    不同的分子签名背景。
+
+与创新点的关系：
+    如果 HER2-enriched 等少数类也有较高 Recall/F1，说明 TRIGEL 没有完全被
+    多数类主导。但严格证明“TRIGEL 改善少数类”还需要与 baseline 或去掉不平衡
+    模块的 ablation 进行对比。
+
+标签序号说明：
+    0 -> Normal-like
+    1 -> Basal-like
+    2 -> HER2-enriched
+    3 -> Luminal A
+    4 -> Luminal B
 """
 
 from __future__ import annotations
@@ -73,6 +93,7 @@ def create_run_dir(base_dir: Path) -> Path:
 
 
 def set_style() -> None:
+    """设置统一的论文/报告风格绘图参数。"""
     mpl.rcParams.update(
         {
             "font.family": "sans-serif",
@@ -89,12 +110,14 @@ def set_style() -> None:
 
 
 def load_labels(data_dir: Path) -> np.ndarray:
+    """加载并拼接训练集与测试集标签，用于分子签名统计。"""
     train = pd.read_csv(data_dir / "labels_tr.csv", header=None).iloc[:, 0]
     test = pd.read_csv(data_dir / "labels_te.csv", header=None).iloc[:, 0]
     return pd.concat([train, test], ignore_index=True).to_numpy(dtype=int)
 
 
 def load_omics(data_dir: Path, omics_id: int) -> tuple[np.ndarray, list[str]]:
+    """加载指定组学矩阵和基因符号列表。"""
     train = pd.read_csv(data_dir / f"{omics_id}_tr.csv", header=None)
     test = pd.read_csv(data_dir / f"{omics_id}_te.csv", header=None)
     matrix = pd.concat([train, test], ignore_index=True).to_numpy(dtype=float)
@@ -104,12 +127,17 @@ def load_omics(data_dir: Path, omics_id: int) -> tuple[np.ndarray, list[str]]:
 
 
 def zscore_columns(matrix: np.ndarray) -> np.ndarray:
+    """按特征列标准化，用于计算不同 marker/signature 的相对高低。"""
     mean = np.nanmean(matrix, axis=0, keepdims=True)
     std = np.nanstd(matrix, axis=0, keepdims=True)
     return (matrix - mean) / (std + 1e-8)
 
 
 def collect_confusion_matrices(result_json: Path) -> list[np.ndarray]:
+    """从最佳实验 JSON 中收集多次运行的测试集混淆矩阵。
+
+    多次运行的混淆矩阵可用于计算逐类指标的均值和标准差，比只看单次结果更稳定。
+    """
     data = json.loads(result_json.read_text(encoding="utf-8"))
     runs = data.get("full_result", {}).get("all_runs_details", [])
     matrices = []
@@ -127,6 +155,7 @@ def collect_confusion_matrices(result_json: Path) -> list[np.ndarray]:
 
 
 def metrics_from_confusion(cm: np.ndarray) -> pd.DataFrame:
+    """由单个混淆矩阵计算每个亚型的 precision、recall 和 F1。"""
     tp = np.diag(cm)
     support = cm.sum(axis=1)
     predicted = cm.sum(axis=0)
@@ -146,6 +175,7 @@ def metrics_from_confusion(cm: np.ndarray) -> pd.DataFrame:
 
 
 def summarize_classwise_metrics(matrices: list[np.ndarray]) -> pd.DataFrame:
+    """汇总多次运行的逐类指标均值和标准差。"""
     frames = []
     for run_id, cm in enumerate(matrices, start=1):
         frame = metrics_from_confusion(cm)
@@ -175,6 +205,11 @@ def summarize_classwise_metrics(matrices: list[np.ndarray]) -> pd.DataFrame:
 def marker_score(
     matrix: np.ndarray, symbols: list[str], markers: list[str]
 ) -> tuple[np.ndarray | None, list[str]]:
+    """根据给定 marker 列表计算样本级 marker score。
+
+    如果 marker 不存在于当前筛选后的特征表中，则返回 None。这样可以避免把
+    数据中不存在的 ERBB2/GRB7 等 marker 强行画出来。
+    """
     symbol_to_indices: dict[str, list[int]] = {}
     for idx, symbol in enumerate(symbols):
         symbol_to_indices.setdefault(symbol, []).append(idx)
@@ -199,6 +234,12 @@ def subtype_discriminative_signature(
     signature_name: str,
     top_n: int,
 ) -> tuple[np.ndarray, pd.DataFrame]:
+    """从当前 mRNA 特征表中构建数据驱动的亚型区分性签名。
+
+    做法是比较目标亚型与其他亚型在每个特征上的平均 z-score 差异，选择差异
+    最大的前 top_n 个基因作为该亚型的 signature。这个签名用于辅助解释当前
+    数据内部的分子差异，不等同于新的生物标志物发现。
+    """
     z = zscore_columns(matrix)
     target = np.isin(labels, target_subtypes)
     target_mean = np.nanmean(z[target], axis=0)
@@ -223,6 +264,11 @@ def subtype_discriminative_signature(
 def build_marker_context(
     data_dir: Path, labels: np.ndarray, top_signature_genes: int
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """构建右侧热图所需的分子签名上下文。
+
+    同时输出 marker_availability.csv，记录经典 marker 是否存在于当前特征表。
+    这一步很重要：如果 HER2 marker 缺失，就不能把缺失误解释为模型问题。
+    """
     matrix, symbols = load_omics(data_dir, 1)
     if matrix.shape[0] != len(labels):
         raise ValueError("Omics 1 and labels have different sample counts.")
@@ -284,6 +330,15 @@ def build_marker_context(
 
 
 def plot_figure(summary: pd.DataFrame, marker_context: pd.DataFrame, output_dir: Path) -> None:
+    """绘制逐类性能图和分子签名背景热图。
+
+    左图读法：
+        少数类 HER2-enriched 的 Recall/F1 越高，越说明模型没有只偏向多数类。
+
+    右图读法：
+        每行是一个数据驱动的亚型签名，每列是一个亚型。红色表示该签名在该亚型
+        中相对更高，蓝色表示更低。
+    """
     fig = plt.figure(figsize=(10.2, 4.8))
     gs = fig.add_gridspec(1, 2, width_ratios=[1.28, 0.95], wspace=0.56)
     ax = fig.add_subplot(gs[0, 0])

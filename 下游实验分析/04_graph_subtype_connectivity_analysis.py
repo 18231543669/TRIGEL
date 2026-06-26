@@ -1,9 +1,22 @@
 #!/usr/bin/env python
-"""Subtype aggregation analysis on sample-similarity graphs.
+"""样本相似图中的亚型连接结构分析。
 
-This downstream analysis uses adj1.csv, adj2.csv, adj3.csv and subtype labels.
-It asks whether graph edges preferentially connect samples from the same cancer
-subtype and which subtype pairs are frequently connected.
+这个脚本读取 ``adj1.csv``、``adj2.csv``、``adj3.csv`` 和样本标签，分析每个
+组学图中的连边是否更倾向于连接同一亚型样本。
+
+图的含义：
+    1. subtype edge counts：不同亚型之间的边数量；
+    2. subtype edge density：考虑类别大小后的边密度；
+    3. intra-subtype edge ratio：所有边中同亚型连边所占比例。
+
+下游分析意义：
+    图神经网络依赖样本图传播信息。如果原始图中同亚型连边比例较高，说明图结构
+    与生物亚型有一定一致性；如果后续做“图增强前后”对比，则同亚型连边比例提升
+    可以直接支持图增强策略的有效性。
+
+注意：
+    当前脚本分析的是已有原始邻接图。若要证明 TRIGEL 的图增强创新点，应进一步
+    对比增强前和增强后的邻接图，尤其关注少数类样本的同类连边比例。
 """
 
 from __future__ import annotations
@@ -36,13 +49,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--weighted",
         action="store_true",
-        help="Use edge weights instead of binarizing nonzero adjacency entries.",
+        help="使用边权重；若不指定，则把所有非零邻接项二值化为边。",
     )
     parser.add_argument(
         "--subtype-names",
         nargs="*",
         default=None,
-        help="Optional subtype names in numeric-label order.",
+        help="按数字标签顺序提供亚型名称。",
     )
     return parser.parse_args()
 
@@ -74,6 +87,11 @@ def subtype_display(value: object, subtype_names: list[str] | None) -> str:
 
 
 def load_adjacency(data_dir: Path, graph_id: int, weighted: bool) -> np.ndarray:
+    """读取某个组学的邻接矩阵。
+
+    默认把非零项看作存在边；如果指定 --weighted，则保留原始边权重。
+    对角线置零，避免样本自己连自己影响统计。
+    """
     adj = pd.read_csv(data_dir / f"adj{graph_id}.csv", header=None).to_numpy(dtype=float)
     np.fill_diagonal(adj, 0.0)
     if not weighted:
@@ -84,6 +102,11 @@ def load_adjacency(data_dir: Path, graph_id: int, weighted: bool) -> np.ndarray:
 def edge_count_matrix(
     adj: np.ndarray, labels: np.ndarray, subtype_names: list[str] | None
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """统计不同亚型之间的边数量和理论可连接样本对数量。
+
+    counts 表示实际边数量；possible 表示两个亚型之间最多可能有多少样本对。
+    用 counts / possible 可以得到边密度，避免大类因为样本多而天然有更多边。
+    """
     classes = np.unique(labels)
     names = [subtype_display(cls, subtype_names) for cls in classes]
     counts = pd.DataFrame(0.0, index=names, columns=names)
@@ -120,6 +143,7 @@ def edge_count_matrix(
 
 
 def plot_matrix(matrix: pd.DataFrame, title: str, output_stem: Path) -> None:
+    """绘制亚型-亚型边数量或边密度矩阵。"""
     fig, ax = plt.subplots(figsize=(6.4, 5.6))
     im = ax.imshow(matrix.to_numpy(), cmap="magma", aspect="auto")
     ax.set_title(title)
@@ -142,6 +166,11 @@ def plot_matrix(matrix: pd.DataFrame, title: str, output_stem: Path) -> None:
 def graph_summary(
     graph_name: str, adj: np.ndarray, labels: np.ndarray, counts: pd.DataFrame, possible: pd.DataFrame
 ) -> tuple[dict[str, float], pd.DataFrame]:
+    """汇总单个图的连边结构。
+
+    intra_subtype_edge_ratio 是核心指标：值越高，说明图中更多边连接同一亚型样本。
+    若用于图增强分析，增强后该值上升通常表示图结构更符合亚型关系。
+    """
     upper = np.triu_indices_from(adj, k=1)
     values = adj[upper]
     nonzero = values != 0
@@ -163,6 +192,7 @@ def graph_summary(
 
 
 def plot_ratio_bar(summary: pd.DataFrame, output_dir: Path) -> None:
+    """绘制每个组学图的同亚型连边比例柱状图。"""
     fig, ax = plt.subplots(figsize=(6.2, 4.4))
     bars = ax.bar(
         summary["graph"],
@@ -186,6 +216,7 @@ def plot_ratio_bar(summary: pd.DataFrame, output_dir: Path) -> None:
 
 
 def main() -> None:
+    """运行所有指定组学图的亚型连接结构分析。"""
     args = parse_args()
     output_dir = create_run_dir(args.output_dir)
     labels = load_labels(args.data_dir, args.labels)

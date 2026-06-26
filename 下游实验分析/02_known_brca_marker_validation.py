@@ -1,9 +1,21 @@
 #!/usr/bin/env python
-"""Known BRCA subtype-marker consistency validation.
+"""已知 BRCA 亚型 marker 的一致性检查。
 
-This analysis does not claim novel biomarker discovery. It checks whether
-classic breast-cancer subtype markers show expected subtype-level differences
-in the current multi-omics matrices.
+这个脚本用于检查当前多组学特征表中是否包含经典乳腺癌亚型 marker，并观察这些
+marker 在不同标签类别中的分布。
+
+图的含义：
+    1. marker heatmap：展示已匹配 marker 在所有样本中的相对高低；
+    2. marker boxplots：展示每个 marker 在不同亚型中的分布。
+
+下游分析意义：
+    这个脚本适合做“标签/数据生物学合理性”的辅助检查。它不能单独证明 TRIGEL
+    的不平衡创新点，因为它分析的是原始输入特征，而不是模型是否改善少数类表示。
+
+重要限制：
+    当前 BRCA875 的筛选后特征表未必保留 ERBB2、GRB7 等经典 HER2 marker。
+    因此若某些 marker 没有被匹配到，不能强行解释为模型没有学到该亚型，只能
+    说明当前输入特征表中缺少这些 marker。
 """
 
 from __future__ import annotations
@@ -92,6 +104,11 @@ def subtype_display(value: object, subtype_names: list[str] | None) -> str:
 
 
 def marker_list(args: argparse.Namespace) -> list[tuple[str, str]]:
+    """整理需要检查的 marker 列表。
+
+    默认使用常见 BRCA 亚型相关 marker；也可以通过命令行传入自定义 marker。
+    返回值中同时保留 marker 所属分组，方便后续输出表格解释。
+    """
     if args.markers:
         return [("Custom", marker.upper()) for marker in args.markers]
     rows = []
@@ -103,6 +120,12 @@ def marker_list(args: argparse.Namespace) -> list[tuple[str, str]]:
 def find_markers(
     data_dir: Path, omics_ids: list[int], markers: list[tuple[str, str]]
 ) -> tuple[pd.DataFrame, dict[int, tuple[np.ndarray, list[str], list[str]]]]:
+    """在指定组学的特征名中查找 marker。
+
+    特征名可能是 ``GENE|EntrezID`` 这种格式，所以会取 ``|`` 前面的基因符号
+    并统一转成大写再匹配。输出的 matched_known_markers.csv 可以用来判断哪些
+    marker 真正存在于当前数据中。
+    """
     omics_data = {}
     found_rows = []
     marker_symbols = [marker for _, marker in markers]
@@ -127,6 +150,7 @@ def find_markers(
 
 
 def zscore_rows(values: np.ndarray) -> np.ndarray:
+    """按 marker 行标准化，让不同量纲/不同范围的 marker 能在同一热图中比较。"""
     mean = np.nanmean(values, axis=1, keepdims=True)
     std = np.nanstd(values, axis=1, keepdims=True)
     return np.clip((values - mean) / (std + 1e-8), -2.5, 2.5)
@@ -139,6 +163,11 @@ def plot_marker_heatmap(
     output_dir: Path,
     subtype_names: list[str] | None,
 ) -> None:
+    """绘制已知 marker 热图。
+
+    样本按标签排序。若某类样本在某组 marker 上整体偏红或偏蓝，说明该类样本
+    在这些 marker 上呈现一致的分子特征。
+    """
     order = np.argsort(labels, kind="stable")
     labels_sorted = labels[order]
     values = zscore_rows(marker_matrix[:, order])
@@ -182,6 +211,11 @@ def plot_marker_boxplots(
     output_dir: Path,
     subtype_names: list[str] | None,
 ) -> None:
+    """绘制 marker 在不同标签类别中的箱线图。
+
+    箱线图用于观察单个 marker 是否在某些类别中明显偏高或偏低。散点表示样本
+    层面的真实分布，避免只看均值造成误判。
+    """
     classes = np.unique(labels)
     chosen = np.arange(min(len(marker_labels), 12))
     ncols = 3
@@ -214,6 +248,7 @@ def plot_marker_boxplots(
 
 
 def main() -> None:
+    """运行 marker 匹配、汇总统计、热图和箱线图绘制流程。"""
     args = parse_args()
     output_dir = create_run_dir(args.output_dir)
     labels = load_labels(args.data_dir, args.labels)
